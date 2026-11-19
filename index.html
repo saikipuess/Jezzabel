@@ -1,0 +1,1801 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A VOS — Tres Meses Contigo, Mi China Hermosa</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-gradient: radial-gradient(circle at 50% 20%, #0d1b2a 0%, #050811 70%, #020308 100%);
+      --accent: #facc15;
+      --accent-soft: rgba(250, 204, 21, 0.16);
+      --accent-border: rgba(250, 204, 21, 0.35);
+      --text-main: #f8fafc;
+      --text-muted: #cbd5e1;
+      --card-bg: rgba(10, 15, 28, 0.8);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: var(--text-main);
+      background: #04070f;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    #bg-layer {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-gradient);
+      transition: background 1.4s ease;
+      z-index: 0;
+    }
+
+    #scene-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    #floating-hearts-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 60;
+      overflow: hidden;
+    }
+
+    .floating-heart {
+      position: absolute;
+      bottom: -40px;
+      font-size: 1.6rem;
+      animation: floatUp 3.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      filter: drop-shadow(0 0 10px rgba(251, 113, 133, 0.75));
+    }
+
+    @keyframes floatUp {
+      0% { transform: translateY(0) scale(0.6) rotate(0deg); opacity: 0; }
+      15% { opacity: 1; }
+      100% { transform: translateY(-105vh) scale(1.35) rotate(22deg); opacity: 0; }
+    }
+
+    /* Notification Modal for Wrong Answer B in Q2 */
+    .trap-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.78);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 100;
+      animation: fadeInFast 0.25s ease;
+    }
+
+    @keyframes fadeInFast {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .trap-modal {
+      background: linear-gradient(145deg, #1e1b2e, #2d1222);
+      border: 2px solid #fb7185;
+      border-radius: 24px;
+      padding: 28px 24px;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 25px 60px rgba(244, 63, 94, 0.45);
+      animation: popShake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+    }
+
+    @keyframes popShake {
+      0% { transform: scale(0.8); }
+      35% { transform: scale(1.04) rotate(-2deg); }
+      65% { transform: scale(1.02) rotate(2deg); }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+
+    .trap-emoji {
+      font-size: 3rem;
+      margin-bottom: 10px;
+    }
+
+    .trap-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.1rem;
+      font-weight: 700;
+      color: #fda4af;
+      margin-bottom: 8px;
+    }
+
+    .trap-desc {
+      font-size: 0.96rem;
+      line-height: 1.55;
+      color: #f1f5f9;
+      margin-bottom: 20px;
+    }
+
+    .trap-btn {
+      background: linear-gradient(135deg, #f43f5e, #fb7185);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 12px 22px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      width: 100%;
+      box-shadow: 0 8px 20px rgba(244, 63, 94, 0.4);
+    }
+
+    .app-shell {
+      position: relative;
+      z-index: 10;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px 16px 68px;
+    }
+
+    /* Sticky Top Bar */
+    .top-bar {
+      position: sticky;
+      top: 12px;
+      z-index: 30;
+      background: rgba(8, 12, 24, 0.85);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--accent-border);
+      border-radius: 20px;
+      padding: 14px 18px;
+      margin-bottom: 24px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
+    }
+
+    .top-bar-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .book-badge {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .heart-counter {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: #fda4af;
+      background: rgba(251, 113, 133, 0.14);
+      border: 1px solid rgba(251, 113, 133, 0.35);
+      padding: 5px 12px;
+      border-radius: 999px;
+    }
+
+    .heart-pulse {
+      display: inline-block;
+      animation: pulseHeart 1.5s infinite;
+    }
+
+    @keyframes pulseHeart {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.24); }
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.09);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #fb7185, #f43f5e, var(--accent));
+      border-radius: 999px;
+      transition: width 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+      box-shadow: 0 0 14px rgba(251, 113, 133, 0.75);
+    }
+
+    .step-dots {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 0.74rem;
+      color: var(--text-muted);
+    }
+
+    .step-dot.active {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* Main Card */
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--accent-border);
+      border-radius: 26px;
+      padding: 28px 22px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+      animation: fadeSlideIn 0.6s ease;
+    }
+
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .chapter-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--accent);
+      background: var(--accent-soft);
+      border: 1px solid var(--accent-border);
+      padding: 6px 14px;
+      border-radius: 999px;
+      margin-bottom: 14px;
+    }
+
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.95rem, 5vw, 2.9rem);
+      line-height: 1.12;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #fff;
+    }
+
+    .hero-subtitle {
+      font-size: 0.98rem;
+      line-height: 1.65;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    .jp-box {
+      background: rgba(255, 255, 255, 0.04);
+      border-left: 3px solid var(--accent);
+      border-radius: 14px;
+      padding: 13px 16px;
+      margin-bottom: 22px;
+    }
+
+    .jp-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .jp-kanji {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .jp-romaji {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 1.15rem;
+      color: #fda4af;
+    }
+
+    .jp-meaning {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .question-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: #fff;
+    }
+
+    .options-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .option-btn {
+      width: 100%;
+      text-align: left;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: var(--text-main);
+      padding: 15px 18px;
+      border-radius: 16px;
+      font-size: 0.96rem;
+      line-height: 1.48;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      transform: translateX(4px);
+    }
+
+    .option-btn.selected-opt {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+    }
+
+    .option-btn:disabled,
+    .option-btn.blocked-opt {
+      opacity: 0.45;
+      cursor: not-allowed;
+      background: rgba(244, 63, 94, 0.08);
+      border-color: rgba(244, 63, 94, 0.35);
+      text-decoration: line-through;
+    }
+
+    .opt-letter {
+      font-weight: 700;
+      color: var(--accent);
+      margin-right: 6px;
+    }
+
+    /* Unlocked Memory Reveal */
+    .reveal-section {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      animation: fadeSlideIn 0.6s ease;
+    }
+
+    .chosen-note {
+      font-size: 0.88rem;
+      color: #fda4af;
+      margin-bottom: 16px;
+      font-style: italic;
+    }
+
+    .reveal-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 22px;
+    }
+
+    @media (min-width: 740px) {
+      .reveal-grid {
+        grid-template-columns: 270px 1fr;
+        align-items: start;
+      }
+    }
+
+    /* Polaroid Frame */
+    .polaroid {
+      background: #fdfbf7;
+      color: #1e293b;
+      padding: 12px 12px 18px;
+      border-radius: 10px;
+      box-shadow: 0 18px 35px rgba(0, 0, 0, 0.55);
+      transform: rotate(-1.3deg);
+      transition: transform 0.3s ease;
+    }
+
+    .polaroid:hover {
+      transform: rotate(0deg) scale(1.02);
+    }
+
+    .polaroid-img-wrap {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: #0f172a;
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .polaroid-img-wrap img,
+    .polaroid-img-wrap canvas {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .polaroid-caption {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.08rem;
+      font-weight: 700;
+      text-align: center;
+      margin-top: 10px;
+      color: #0f172a;
+    }
+
+    .polaroid-sub {
+      font-size: 0.75rem;
+      text-align: center;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    /* Book Quote Excerpts */
+    .book-quote-box {
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      padding: 18px 20px;
+      margin-bottom: 16px;
+    }
+
+    .book-quote-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .excerpts-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .book-excerpt-block {
+      position: relative;
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border-left: 2px solid var(--accent-border);
+      border-radius: 0 12px 12px 0;
+    }
+
+    .excerpt-source-tag {
+      display: inline-block;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-style: normal;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+      opacity: 0.85;
+      margin-bottom: 4px;
+    }
+
+    .book-quote-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.2rem;
+      line-height: 1.55;
+      color: #f8fafc;
+      font-style: italic;
+    }
+
+    .book-quote-text strong {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .poems-pair {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    @media (min-width: 600px) {
+      .poems-pair {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .poem-box {
+      background: linear-gradient(135deg, rgba(251, 113, 133, 0.12), rgba(250, 204, 21, 0.08));
+      border: 1px solid rgba(251, 113, 133, 0.28);
+      border-radius: 16px;
+      padding: 14px 16px;
+    }
+
+    .poem-title {
+      font-size: 0.74rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #fda4af;
+      margin-bottom: 6px;
+    }
+
+    .poem-lines {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem;
+      line-height: 1.5;
+      color: #ffe4e6;
+      white-space: pre-line;
+    }
+
+    /* Clean Glassmorphic Audio Player */
+    .audio-widget {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.88), rgba(30, 27, 46, 0.78));
+      border: 1px solid var(--accent-border);
+      border-radius: 18px;
+      padding: 14px 16px;
+      margin-bottom: 18px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+    }
+
+    .audio-widget-top {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .play-circle-btn {
+      width: 46px;
+      height: 46px;
+      min-width: 46px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), #fb7185);
+      color: #090d16;
+      font-size: 1.1rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 0 18px var(--accent-soft);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .play-circle-btn:hover {
+      transform: scale(1.08);
+      box-shadow: 0 0 24px var(--accent-border);
+    }
+
+    .play-circle-btn.is-playing {
+      animation: ringPulse 1.6s infinite;
+    }
+
+    @keyframes ringPulse {
+      0% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.55); }
+      70% { box-shadow: 0 0 0 12px rgba(250, 204, 21, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0); }
+    }
+
+    .audio-meta {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .audio-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .audio-track-name {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #f8fafc;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .audio-timeline-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .audio-bar-bg {
+      flex: 1;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.14);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .audio-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), #fb7185);
+      border-radius: 999px;
+      transition: width 0.12s linear;
+    }
+
+    .eq-bars {
+      display: inline-flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 14px;
+      margin-left: 6px;
+    }
+
+    .eq-bar {
+      width: 3px;
+      height: 4px;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: height 0.2s ease;
+    }
+
+    .eq-bars.active .eq-bar:nth-child(1) { animation: eqBounce 0.6s infinite alternate; }
+    .eq-bars.active .eq-bar:nth-child(2) { animation: eqBounce 0.45s 0.15s infinite alternate; }
+    .eq-bars.active .eq-bar:nth-child(3) { animation: eqBounce 0.55s 0.3s infinite alternate; }
+
+    @keyframes eqBounce {
+      from { height: 4px; }
+      to { height: 14px; }
+    }
+
+    .primary-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      background: linear-gradient(135deg, #f43f5e, #fb7185);
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.02rem;
+      border: none;
+      border-radius: 16px;
+      padding: 15px 24px;
+      cursor: pointer;
+      box-shadow: 0 10px 28px rgba(244, 63, 94, 0.4);
+      transition: transform 0.25s ease;
+    }
+
+    .primary-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    /* Final Screen */
+    .countdown-card {
+      background: linear-gradient(135deg, rgba(251, 113, 133, 0.16), rgba(250, 204, 21, 0.12));
+      border: 1px solid rgba(253, 224, 71, 0.45);
+      border-radius: 22px;
+      padding: 22px 18px;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .countdown-digits {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin: 14px 0 4px;
+    }
+
+    .time-box {
+      background: rgba(5, 8, 17, 0.75);
+      border: 1px solid var(--accent-border);
+      border-radius: 14px;
+      padding: 10px 14px;
+      min-width: 72px;
+    }
+
+    .time-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .time-lbl {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .midnight-celebration {
+      background: linear-gradient(135deg, rgba(244, 63, 94, 0.26), rgba(250, 204, 21, 0.22));
+      border: 2px solid #fde047;
+      border-radius: 20px;
+      padding: 20px;
+      animation: fadeSlideIn 0.6s ease;
+    }
+
+    .midnight-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.7rem, 4.5vw, 2.5rem);
+      font-weight: 700;
+      color: #fde047;
+      margin-bottom: 6px;
+    }
+
+    .answers-summary-list {
+      display: grid;
+      gap: 10px;
+      margin: 16px 0 26px;
+    }
+
+    .answer-item {
+      background: rgba(255, 255, 255, 0.045);
+      border-left: 3px solid #fb7185;
+      border-radius: 14px;
+      padding: 13px 16px;
+    }
+
+    .answer-q {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .answer-a {
+      font-size: 0.95rem;
+      color: #f8fafc;
+      line-height: 1.45;
+    }
+
+    .all-polaroids-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 14px;
+      margin: 16px 0 22px;
+    }
+
+    .mini-polaroid {
+      background: #fdfbf7;
+      color: #0f172a;
+      padding: 8px 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.25s ease;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+      border: 2px solid transparent;
+    }
+
+    .mini-polaroid:hover,
+    .mini-polaroid.active-card {
+      transform: translateY(-4px) scale(1.03);
+      border-color: var(--accent);
+    }
+
+    .mini-polaroid .polaroid-caption {
+      font-size: 0.86rem;
+      margin-top: 6px;
+    }
+
+    .jp-glossary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    .jp-mini-card {
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid var(--accent-border);
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .jp-mini-card .kanji {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .jp-mini-card .romaji {
+      font-size: 0.86rem;
+      color: #fda4af;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .jp-mini-card .desc {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    .signature-box {
+      margin-top: 24px;
+      text-align: right;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem;
+      font-style: italic;
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <div id="bg-layer"></div>
+  <canvas id="scene-canvas"></canvas>
+  <div id="floating-hearts-layer"></div>
+
+  <!-- Trap Notification Modal -->
+  <div id="trap-modal-root"></div>
+
+  <div class="app-shell">
+    <header class="top-bar">
+      <div class="top-bar-row">
+        <div class="book-badge">
+          <span>📖</span>
+          <span>A VOS — Nuestra Historia en Capítulos</span>
+        </div>
+        <div class="heart-counter">
+          <span class="heart-pulse">❤️</span>
+          <span id="heart-percent">0%</span>
+          <span>•</span>
+          <span id="heart-count">0 / 5 Recuerdos</span>
+        </div>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <div class="step-dots">
+        <span class="step-dot" id="dot-0">1. El Origen</span>
+        <span class="step-dot" id="dot-1">2. Primeros Chats</span>
+        <span class="step-dot" id="dot-2">3. Sept. Joven</span>
+        <span class="step-dot" id="dot-3">4. Octubre</span>
+        <span class="step-dot" id="dot-4">5. 3 Meses</span>
+      </div>
+    </header>
+
+    <main id="app-container"></main>
+  </div>
+
+  <script>
+    const STAGES = [
+      {
+        id: 1,
+        scene: 'fireflies',
+        bgGradient: 'radial-gradient(circle at 50% 20%, #0d1b2a 0%, #050811 70%, #020308 100%)',
+        accent: '#facc15',
+        accentSoft: 'rgba(250, 204, 21, 0.16)',
+        accentBorder: 'rgba(250, 204, 21, 0.35)',
+        chapterTag: 'Cap. 1 & Cap. 3 • El Origen (19 y 20 de Agosto)',
+        jp: {
+          kanji: '一目惚れ  •  恋の予感',
+          romaji: 'Hitomebore & Koi no yokan',
+          meaning: '«Amor a primera vista» y «la premonición del amor»: saber desde el primer segundo que te miré que ibas a cambiar mi vida entera.'
+        },
+        question: '¿Qué pensabas vos allá por el 19 y 20 de agosto cuando te animaste a volver a hablarme?',
+        options: [
+          { letter: 'A', text: 'Pensaba que capaz me odiabas, pero como veías mis estados de Brawl Stars me animé a mandarte un «hola, ¿cómo estás?».' },
+          { letter: 'B', text: 'Solo quería sacarte charla con cualquier excusa, como lo de Python o preguntarte qué onda con «farmear aura».' },
+          { letter: 'C', text: 'Me daba risa que en tu perfil parecieras tener «cara de culo», aunque en el curso conmigo nunca fuiste así.' }
+        ],
+        photoFile: 'imagenes/foto1.jpg',
+        photoCaption: '«Sos mi lucecita con brillo propio»',
+        photoSub: '19 - 20 de Agosto • El Día Cero',
+        bookTitle: 'Lo que dejé escrito en Cap. 1 y Cap. 3 de «A VOS»:',
+        excerpts: [
+          {
+            label: 'Del Capítulo 1 — El primer instante',
+            text: '«No soy el mejor expresándome, pero voy a decirte que soy yo el que se enamoró en el primer instante en el que te vio. Me intimidaste solo con tu mirada.»'
+          },
+          {
+            label: 'Del Subcapítulo 2.2 — Luciérnagas',
+            text: '«Las luciérnagas son los únicos bichos que no van hacia la luz, la generan. <strong>Sos mi lucecita y espero tenerla siempre iluminando mi vida como hasta ahora y siempre.</strong>»'
+          }
+        ],
+        poems: [
+          {
+            title: 'Poema I — Luz propia en la oscuridad',
+            lines: 'No busqué el reflejo de luces artificiales,\nni quise perderme en el ruido de la ciudad;\nme bastó encontrarte entre mil señales\npara ver tu brillo en plena oscuridad.'
+          },
+          {
+            title: 'Poema II — El mensaje que encendió todo',
+            lines: 'Un simple «hola» bastó para frenar el mundo,\ny encender de nuevo lo que creía apagado;\ndesde aquel primer segundo profundo\nsupe que quería caminar a tu lado.'
+          }
+        ],
+        trackTitle: 'Cuando el agua hirviendo — Milo J',
+        audioFiles: ['imagenes/cancion1.mp3', 'imagenes/cancion1.m4a', 'imagenes/milo.mp3'],
+        clipStart: 92,
+        clipEnd: 102
+      },
+      {
+        id: 2,
+        scene: 'drizzle',
+        bgGradient: 'radial-gradient(circle at 50% 15%, #0f2942 0%, #091526 65%, #040914 100%)',
+        accent: '#38bdf8',
+        accentSoft: 'rgba(56, 189, 248, 0.16)',
+        accentBorder: 'rgba(56, 189, 248, 0.36)',
+        chapterTag: 'Cap. 2 & Cap. 3 • Los Primeros Chats (Agosto y Septiembre)',
+        jp: {
+          kanji: '心の居場所  •  優しい雨',
+          romaji: 'Kokoro no ibasho & Yasashii ame',
+          meaning: '«El santuario del corazón» y «llovizna mansa»: cada audio tuyo y cada charla que me iba enamorando sin darme cuenta.'
+        },
+        question: 'En esas primeras semanas hablando por chat, ¿qué creés que era lo que más me llamó la atención de vos?',
+        options: [
+          { letter: 'A', text: 'Cuando te mandaba audios o te contaba emocionada sobre la carrera y lo que me gusta, como el Rasta Negro y las hamburguesas.' },
+          { letter: 'B', text: 'Cuando me tirabas indirectas para vernos o tomar mates y yo te decía «no» y seguías insistiendo y te llamaba «viejo».', isTrap: true },
+          { letter: 'C', text: 'Que aunque me costara o no me dejaran salir, siempre terminábamos volviendo a charlar de cualquier cosa.' }
+        ],
+        photoFile: 'imagenes/foto2.jpg',
+        photoCaption: '«Escuché tu audio como 7 u 8 veces»',
+        photoSub: 'Fines de Agosto & Septiembre • Nuestros primeros chats',
+        bookTitle: 'Lo que dejé escrito en Cap. 2 y Cap. 3 de «A VOS»:',
+        excerpts: [
+          {
+            label: 'Del Capítulo 3 — Tu voz',
+            text: '«Me mandaste un audio (<strong>me gustó mucho tu voz, lo escuché más de una sola vez, como 7 o 8 veces</strong>).»'
+          },
+          {
+            label: 'Del Capítulo 2 — Cuando dejaste de ir',
+            text: '«Cuando dejaste de ir dije: "¿Cómo puede ser que sienta tanto por una mujer de repente?"»'
+          },
+          {
+            label: 'La promesa que me hice',
+            text: '«Y me dije: <strong>si me habla yo... no le dejo de hablar nunca más.</strong>»'
+          }
+        ],
+        poems: [
+          {
+            title: 'Poema I — La calma en tu voz',
+            lines: 'Bastó un audio tuyo para cambiar mi día,\npara quedarme atento a cada palabra,\ny descubrir que en tu voz ya vivía\nla calma exacta que mi pecho buscaba.'
+          },
+          {
+            title: 'Poema II — Llovizna mansa',
+            lines: 'Te imagino constante, suave como llovizna,\nque se filtra sin ruido hasta el fondo del pecho,\ndonde todo lo oscuro de pronto se ilumina\ny cada miedo antiguo queda deshecho.'
+          }
+        ],
+        trackTitle: 'Canción — «A VOS»',
+        audioFiles: ['imagenes/cancion2.mp3', 'imagenes/cancion2.m4a', 'imagenes/avos.mp3', 'imagenes/cancion.mp3'],
+        clipStart: 63,
+        clipEnd: 81
+      },
+      {
+        id: 3,
+        scene: 'sunset',
+        bgGradient: 'radial-gradient(circle at 50% 18%, #451a1d 0%, #1e101c 62%, #09060e 100%)',
+        accent: '#fb923c',
+        accentSoft: 'rgba(251, 146, 60, 0.17)',
+        accentBorder: 'rgba(251, 146, 60, 0.38)',
+        chapterTag: 'Cap. 2 & Cap. 3 • Septiembre Joven (26 y 27 de Septiembre)',
+        jp: {
+          kanji: '運命の人  •  運命の赤い糸',
+          romaji: 'Unmei no hito & Unmei no akai ito',
+          meaning: '«La persona destinada» y «el hilo rojo del destino»: el día que saliste a buscarme y me sentí en la luna solo con rozarte la mano.'
+        },
+        question: 'Cuando nos vimos por fin en el Septiembre Joven, ¿qué fue lo que sentiste vos esos días?',
+        options: [
+          { letter: 'A', text: 'Que aunque al principio dije «tal vez nos crucemos», quise que vengas conmigo a estar conmigo y no dejarte estar solo, me encantó que estuvieras ahí.' },
+          { letter: 'B', text: 'Me daba ganas de sonreírte cada vez que te negabas cuando te ofrecía algo hasta te hacía malas caras cuando me rechazabas, ush ush.' },
+          { letter: 'C', text: 'Lo lindo que se sintió charlar, debatir quién ganaba la batalla.' }
+        ],
+        photoFile: 'imagenes/foto3.jpg',
+        photoCaption: '«Solo con rozarte la mano me sentí en la luna»',
+        photoSub: '26 y 27 de Septiembre • Septiembre Joven',
+        bookTitle: 'Lo que dejé escrito en Cap. 2 y Cap. 3 de «A VOS»:',
+        excerpts: [
+          {
+            label: 'Del Capítulo 3 — 26 de septiembre',
+            text: '«Estuve como 20 minutos diciéndome en el espejito de la moto: "¿Me veo bien? Sí, no, sí, no..." hasta que saliste a buscarme, me saludaste y me dijiste: <strong>"¡vení, vamos!"</strong>. Estaba re metido en mi cabeza y dije: <strong>"ya está, me enamoró"</strong>.»'
+          },
+          {
+            label: 'Del Capítulo 2 — El roce de tus manos',
+            text: '«Solo con rozarte la mano en el Septiembre Joven yo me sentí en la luna, a ese nivel me estabas gustando en ese momento.»'
+          },
+          {
+            label: 'Del Capítulo 3 — 27 de septiembre',
+            text: '«<strong>27 de septiembre: El mejor día de mi vida x2.</strong>»'
+          }
+        ],
+        poems: [
+          {
+            title: 'Poema I — Frente al espejito de la moto',
+            lines: 'Veinte minutos mirando un reflejo nervioso,\ntemblando por dentro antes de llegar,\ny bastó tu sonrisa para volver hermoso\nel instante en que al fin te pude encontrar.'
+          },
+          {
+            title: 'Poema II — El roce de tus manos',
+            lines: 'Rozar tu mano fue tocar las estrellas,\nsentir que el mundo frenaba su andar,\ny entender mirando tus pupilas bellas\nque a tu lado siempre me quiero quedar.'
+          }
+        ],
+        trackTitle: 'Me Tiene Mal — Paulo Londra',
+        audioFiles: ['imagenes/cancion3.mp3', 'imagenes/cancion3.m4a'],
+        clipStart: 46,
+        clipEnd: 66
+      },
+      {
+        id: 4,
+        scene: 'aurora',
+        bgGradient: 'radial-gradient(circle at 50% 18%, #2e1065 0%, #170b33 65%, #070414 100%)',
+        accent: '#c084fc',
+        accentSoft: 'rgba(192, 132, 252, 0.17)',
+        accentBorder: 'rgba(192, 132, 252, 0.38)',
+        chapterTag: 'Subcap. 2.1 & Cap. 3 • Octubre: Tu Corazón Abierto y «Terroncito»',
+        jp: {
+          kanji: '大好きだよ  •  君が僕の光',
+          romaji: 'Daisuki da yo & Kimi ga boku no hikari',
+          meaning: '«Me encantás muchísimo» y «Vos sos mi luz»: cuando me dijiste «terroncito» y me dejaste completamente derretido de amor.'
+        },
+        question: 'Cuando te animaste a abrir tu corazón conmigo, ¿qué fue lo que más sentiste vos?',
+        options: [
+          { letter: 'A', text: 'Tenía miedo de volver a amar y de parecer «muy intensa», por eso te pregunté si podía amarte como me naciera sin que me pongas un freno.' },
+          { letter: 'B', text: 'Me dieron ganas de mimarte a mi manera: mandarte lo de la madera morada y decirte «terroncito» e irme abriendo de a poco a vos.' },
+          { letter: 'C', text: 'Sentir que con vos podía ser yo misma, pedirte otro abrazo más, saber que siempre ibas a estar.' },
+          { letter: 'D', text: 'Todas las anteriores.' }
+        ],
+        photoFile: 'imagenes/foto4.jpg',
+        photoCaption: '«Me dijiste terroncito y me derretí entero»',
+        photoSub: '19, 20 y 27 de Octubre • Mes Dos de Nosotros',
+        bookTitle: 'Lo que dejé escrito en Subcap. 2.1 y Cap. 3 de «A VOS»:',
+        excerpts: [
+          {
+            label: 'Del Subcapítulo 2.1 — El eco de tus preguntas',
+            text: '«Cuando vos me contestaste: <strong>"¿Te puedo amar como realmente me salga y me nazca?"</strong>, sentí: <strong>"Por fin llegaste, valió la pena cada día de espera"</strong>. Jamás le pondría un freno a lo que me das mi vida.»'
+          },
+          {
+            label: 'Del Capítulo 3 — 20 de octubre',
+            text: '«El 20 de octubre te empecé a decir <strong>«corazón»</strong> y cuando me escribiste y dijiste <strong>«terroncito»</strong> me derretí en la cama.»'
+          }
+        ],
+        poems: [
+          {
+            title: 'Poema I — Sin frenos ni límites',
+            lines: 'No pidas permiso para amar sin medida,\nno frenes el río que nace en tu voz,\nque cada caricia me devuelve la vida\ny calma las sombras que el tiempo dejó.'
+          },
+          {
+            title: 'Poema II — Madera morada y «terroncito»',
+            lines: 'Entre bloques morados de un mundo inventado,\nun contrato de abrazos y un Cepita al pasar,\nme bastó un «terroncito» por vos susurrado\npara que mi pecho volviera a volar.'
+          }
+        ],
+        trackTitle: 'Disfruto — Carla Morrison',
+        audioFiles: ['imagenes/cancion4.mp3', 'imagenes/cancion4.m4a'],
+        clipStart: 68,
+        clipEnd: 96
+      },
+      {
+        id: 5,
+        scene: 'constellation',
+        bgGradient: 'radial-gradient(circle at 50% 20%, #3b0d26 0%, #16091d 65%, #05030a 100%)',
+        accent: '#fde047',
+        accentSoft: 'rgba(253, 224, 71, 0.16)',
+        accentBorder: 'rgba(253, 224, 71, 0.38)',
+        chapterTag: 'Cierre del Libro • Ecos del Corazón & Quiero Vivirlo Todo Contigo',
+        jp: {
+          kanji: '愛してる  •  月が綺麗ですね  •  ずっと一緒',
+          romaji: 'Aishiteru • Tsuki ga kirei desu ne • Zutto issho',
+          meaning: '«Te amo con entrega total», «La luna está hermosa, ¿no?» y «Siempre juntos»: mientras los caminos sean rosas o espinas puras.'
+        },
+        question: 'Hoy que cumplimos 3 meses desde que arrancó nuestra historia (19 de noviembre), ¿qué es lo que más tenés ganas de que vivamos juntos?',
+        options: [
+          { letter: 'A', text: 'Poder amarnos sin miedo y sin límites, sabiendo que siempre nos vamos a cuidar en los días lindos y en los difíciles.' },
+          { letter: 'B', text: 'Seguir sumando planes pendientes: las hamburguesas caseras, el ramen con salsa y queso, tardes de lluvia y mil abrazos más.' },
+          { letter: 'C', text: 'Construir nuestro futuro paso a paso, riéndonos de nuestras locuras y eligiéndonos todos los días.' },
+          { letter: 'D', text: 'Todas las anteriores.' }
+        ],
+        photoFile: 'imagenes/foto5.jpg',
+        photoCaption: '«Mi manera favorita de imaginar el mañana siempre va a ser con vos»',
+        photoSub: 'Tres Meses Juntos • Por toda la vida',
+        bookTitle: 'El cierre que escribí para vos en «A VOS»:',
+        excerpts: [
+          {
+            label: 'De «¿Qué si quiero todo contigo?»',
+            text: '«Quiero ser feliz a tu lado, quiero verte sonreír cada día, agarrarte de la mano mientras los caminos sean rosas o espinas puras.»'
+          },
+          {
+            label: 'Nuestras imperfecciones',
+            text: '«Dentro de nuestras imperfecciones encontraremos la perfección al amar las locuras del otro, de poder reírnos hasta no poder más, de discutir para luego reconciliarnos como los enamorados que somos y secarnos las lágrimas mutuamente.»'
+          },
+          {
+            label: 'De «Quiero vivirlo todo contigo»',
+            text: '«<strong>Si pudiera pedirle algo al destino sería tiempo a tu lado, porque mi manera favorita de imaginar el mañana siempre va a ser con vos.</strong>»'
+          }
+        ],
+        poems: [
+          {
+            title: 'Poema I — Rosas o espinas puras',
+            lines: 'Tres meses pasaron desde aquel primer día,\ny en cada palabra te vuelvo a elegir;\ncon rosas o espinas, con llanto o alegría,\na tu lado siempre yo quiero vivir.'
+          },
+          {
+            title: 'Poema II — Imaginando el mañana con vos',
+            lines: 'No te quiero tan solo para los días bonitos,\nte quiero en las metas y en la tempestad,\nconstruyendo recuerdos que sean infinitos\ny amando tus locuras por la eternidad.'
+          }
+        ],
+        trackTitle: 'Caminar de Tu Mano — Río Roma ft. Fonseca',
+        audioFiles: ['imagenes/cancion5.mp3', 'imagenes/cancion5.m4a'],
+        clipStart: 107,
+        clipEnd: 142
+      }
+    ];
+
+    const JAPANESE_WORDS = [
+      { kanji: '一目惚れ', romaji: 'Hitomebore (Del libro)', desc: 'Amor a primera vista: enamorarse en el primer instante en que me intimidaste con tu mirada.' },
+      { kanji: '大好きだよ', romaji: 'Daisuki da yo (Del libro)', desc: '«Me encantás muchísimo»: adorarte por cada mínimo detalle y por tu ternura de golden.' },
+      { kanji: '運命の人', romaji: 'Unmei no hito (Del libro)', desc: '«La persona destinada»: llegar cuando menos lo esperaba para devolverme toda la fe.' },
+      { kanji: '愛してる', romaji: 'Aishiteru (Del libro)', desc: '«Te amo»: la promesa sagrada de cuidarte, defenderte y que nunca más estés sola.' },
+      { kanji: '恋の予感', romaji: 'Koi no yokan (Nueva)', desc: 'La premonición del amor: esa certeza desde el principio de que me iba a enamorar de vos.' },
+      { kanji: '月が綺麗ですね', romaji: 'Tsuki ga kirei desu ne (Nueva)', desc: '«La luna está hermosa, ¿no?» — la forma más poética en Japón de decir «Te amo».' },
+      { kanji: '君が僕の光', romaji: 'Kimi ga boku no hikari (Nueva)', desc: '«Vos sos mi luz»: dedicado a mi lucecita que brilla con luz propia como una luciérnaga.' },
+      { kanji: '心の居場所', romaji: 'Kokoro no ibasho (Nueva)', desc: '«El santuario del corazón»: el lugar seguro donde me das la mano y los miedos desaparecen.' },
+      { kanji: 'ずっと一緒', romaji: 'Zutto issho (Nueva)', desc: '«Siempre juntos»: en los días bonitos, en los difíciles y en todos los planes que aún no existen.' }
+    ];
+
+    let currentStageIndex = 0;
+    let unlockedCount = 0;
+    let selectedAnswers = {};
+    let blockedOptions = {};
+    let isCompleted = false;
+    let activeFinalTab = 0;
+    let midnightCelebrated = false;
+
+    // Audio Clip Controller
+    let progressTimer = null;
+    let htmlAudio = null;
+    let isMusicPlaying = false;
+    let activeStageForAudio = STAGES[0];
+
+    function updateAudioUI(elapsedSec, playing) {
+      const stage = activeStageForAudio || STAGES[0];
+      const clipDuration = stage.clipEnd - stage.clipStart;
+
+      const btn = document.getElementById('audio-play-btn');
+      const eq = document.getElementById('audio-eq-bars');
+      const fill = document.getElementById('audio-progress-fill');
+
+      if (btn) {
+        btn.textContent = playing ? '❚❚' : '▶';
+        btn.classList.toggle('is-playing', playing);
+      }
+      if (eq) {
+        eq.classList.toggle('active', playing);
+      }
+      const clamped = Math.min(clipDuration, Math.max(0, elapsedSec));
+      const pct = (clamped / clipDuration) * 100;
+      if (fill) {
+        fill.style.width = pct + '%';
+      }
+    }
+
+    function stopStageAudio() {
+      isMusicPlaying = false;
+      if (progressTimer) {
+        clearInterval(progressTimer);
+        progressTimer = null;
+      }
+      if (htmlAudio) {
+        htmlAudio.pause();
+        htmlAudio = null;
+      }
+      updateAudioUI(0, false);
+    }
+
+    function toggleStageMusic(stageIdx, evt) {
+      if (evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+      }
+      if (isMusicPlaying) {
+        stopStageAudio();
+        return;
+      }
+
+      const stage = STAGES[stageIdx];
+      if (!stage) return;
+      activeStageForAudio = stage;
+
+      const clipDuration = stage.clipEnd - stage.clipStart;
+      const sources = stage.audioFiles || [];
+      let attemptIdx = 0;
+
+      const tryNextAudio = () => {
+        if (attemptIdx >= sources.length) {
+          updateAudioUI(0, false);
+          return;
+        }
+
+        const src = sources[attemptIdx++];
+        const audio = new Audio(src);
+        audio.preload = 'metadata';
+
+        audio.addEventListener('loadedmetadata', () => {
+          htmlAudio = audio;
+          isMusicPlaying = true;
+          const startPos = audio.duration > stage.clipStart ? stage.clipStart : 0;
+          audio.currentTime = startPos;
+
+          audio.play().then(() => {
+            updateAudioUI(0, true);
+            progressTimer = setInterval(() => {
+              if (!isMusicPlaying || !htmlAudio) return;
+              const elapsed = htmlAudio.currentTime - startPos;
+              if (elapsed >= clipDuration || htmlAudio.ended) {
+                stopStageAudio();
+              } else {
+                updateAudioUI(elapsed, true);
+              }
+            }, 100);
+          }).catch(() => {
+            tryNextAudio();
+          });
+        }, { once: true });
+
+        audio.addEventListener('error', () => {
+          tryNextAudio();
+        }, { once: true });
+      };
+
+      tryNextAudio();
+    }
+
+    // Scene Animation Engine
+    const canvas = document.getElementById('scene-canvas');
+    const ctx = canvas.getContext('2d');
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+    let currentScene = 'fireflies';
+    let particles = [];
+
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+      initSceneParticles(currentScene);
+    });
+
+    function initSceneParticles(scene) {
+      currentScene = scene;
+      particles = [];
+      const count = scene === 'drizzle' ? 110 : 65;
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          r: Math.random() * 2.6 + 1.2,
+          vx: (Math.random() - 0.5) * 0.6,
+          vy: scene === 'drizzle' ? Math.random() * 4.5 + 3.5 : (Math.random() - 0.5) * 0.5,
+          phase: Math.random() * Math.PI * 2,
+          hue: scene === 'fireflies' ? (Math.random() > 0.35 ? '#facc15' : '#84cc16')
+               : scene === 'sunset' ? '#fb923c'
+               : scene === 'drizzle' ? '#7dd3fc'
+               : scene === 'aurora' ? '#c084fc'
+               : (Math.random() > 0.5 ? '#fde047' : '#fb7185')
+        });
+      }
+    }
+
+    function animateCanvas() {
+      ctx.clearRect(0, 0, width, height);
+
+      if (currentScene === 'aurora') {
+        const grad = ctx.createRadialGradient(width * 0.5, height * 0.25, 20, width * 0.5, height * 0.25, width * 0.65);
+        grad.addColorStop(0, 'rgba(168, 85, 247, 0.16)');
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, width, height);
+      }
+
+      for (const p of particles) {
+        p.phase += 0.03;
+        if (currentScene === 'drizzle') {
+          p.y += p.vy;
+          p.x -= 0.7;
+          if (p.y > height) {
+            p.y = -15;
+            p.x = Math.random() * width;
+          }
+          ctx.strokeStyle = 'rgba(125, 211, 252, 0.32)';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p.x - 2, p.y + 14);
+          ctx.stroke();
+        } else {
+          p.x += p.vx + Math.sin(p.phase) * 0.25;
+          p.y += p.vy + Math.cos(p.phase) * 0.25;
+          if (p.x < -20) p.x = width + 20;
+          if (p.x > width + 20) p.x = -20;
+          if (p.y < -20) p.y = height + 20;
+          if (p.y > height + 20) p.y = -20;
+
+          const glow = 0.45 + 0.55 * Math.sin(p.phase * 1.4);
+          ctx.save();
+          ctx.globalAlpha = glow;
+          ctx.fillStyle = p.hue;
+          ctx.shadowBlur = 14;
+          ctx.shadowColor = p.hue;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      requestAnimationFrame(animateCanvas);
+    }
+
+    function applyTheme(stage) {
+      document.documentElement.style.setProperty('--bg-gradient', stage.bgGradient);
+      document.documentElement.style.setProperty('--accent', stage.accent);
+      document.documentElement.style.setProperty('--accent-soft', stage.accentSoft);
+      document.documentElement.style.setProperty('--accent-border', stage.accentBorder);
+      initSceneParticles(stage.scene);
+    }
+
+    function spawnFloatingHearts(amount = 14) {
+      const layer = document.getElementById('floating-hearts-layer');
+      const emojis = ['❤️', '💖', '✨', '💛', '💕'];
+      for (let i = 0; i < amount; i++) {
+        setTimeout(() => {
+          const el = document.createElement('div');
+          el.className = 'floating-heart';
+          el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+          el.style.left = (8 + Math.random() * 84) + 'vw';
+          el.style.fontSize = (1.2 + Math.random() * 1.1) + 'rem';
+          layer.appendChild(el);
+          setTimeout(() => el.remove(), 3300);
+        }, i * 95);
+      }
+    }
+
+    function updateProgressBar() {
+      const pct = Math.round((unlockedCount / STAGES.length) * 100);
+      document.getElementById('heart-percent').textContent = pct + '%';
+      document.getElementById('heart-count').textContent = `${unlockedCount} / ${STAGES.length} Recuerdos`;
+      document.getElementById('progress-fill').style.width = pct + '%';
+
+      for (let i = 0; i < STAGES.length; i++) {
+        const dot = document.getElementById('dot-' + i);
+        if (dot) {
+          dot.classList.toggle('active', i <= currentStageIndex || isCompleted);
+        }
+      }
+    }
+
+    function showTrapNotification(stageIdx, letter) {
+      blockedOptions[`${stageIdx}-${letter}`] = true;
+      const root = document.getElementById('trap-modal-root');
+      root.innerHTML = `
+        <div class="trap-overlay" onclick="closeTrapNotification()">
+          <div class="trap-modal" onclick="event.stopPropagation()">
+            <div class="trap-emoji">👀😂❤️</div>
+            <div class="trap-title">¿Amor? ¿Es en serio?</div>
+            <p class="trap-desc">
+              Mmm... ¡esa opción no vale! Se acaba de bloquear esa respuesta para que vuelvas a elegir de verdad, mi China hermosa.
+            </p>
+            <button type="button" class="trap-btn" onclick="closeTrapNotification()">Volver a elegir 💕</button>
+          </div>
+        </div>
+      `;
+      render();
+    }
+
+    function closeTrapNotification() {
+      document.getElementById('trap-modal-root').innerHTML = '';
+    }
+
+    function selectAnswer(optIndex) {
+      const stage = STAGES[currentStageIndex];
+      const opt = stage.options[optIndex];
+      if (!opt) return;
+
+      const blockKey = `${currentStageIndex}-${opt.letter}`;
+      if (blockedOptions[blockKey]) return;
+
+      if (opt.isTrap) {
+        showTrapNotification(currentStageIndex, opt.letter);
+        return;
+      }
+
+      selectedAnswers[currentStageIndex] = {
+        letter: opt.letter,
+        text: opt.text
+      };
+
+      if (unlockedCount < currentStageIndex + 1) {
+        unlockedCount = currentStageIndex + 1;
+      }
+      spawnFloatingHearts(16);
+      updateProgressBar();
+      render();
+    }
+
+    function goNext() {
+      stopStageAudio();
+      if (currentStageIndex < STAGES.length - 1) {
+        currentStageIndex++;
+        activeStageForAudio = STAGES[currentStageIndex];
+        applyTheme(STAGES[currentStageIndex]);
+        updateProgressBar();
+        render();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        isCompleted = true;
+        activeStageForAudio = STAGES[0];
+        spawnFloatingHearts(28);
+        updateProgressBar();
+        render();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    function drawFallbackIllustration(canvasEl, stageId) {
+      if (!canvasEl) return;
+      const c = canvasEl.getContext('2d');
+      const w = canvasEl.width = 400;
+      const h = canvasEl.height = 400;
+
+      const palettes = {
+        1: ['#060d1f', '#132a4a', '#facc15'],
+        2: ['#07192c', '#0c4a6e', '#38bdf8'],
+        3: ['#2b0f16', '#7c2d12', '#fb923c'],
+        4: ['#190933', '#4c1d95', '#c084fc'],
+        5: ['#2a081b', '#831843', '#fde047']
+      };
+      const [c1, c2, glow] = palettes[stageId] || palettes[1];
+      const g = c.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, c1);
+      g.addColorStop(1, c2);
+      c.fillStyle = g;
+      c.fillRect(0, 0, w, h);
+
+      for (let i = 0; i < 48; i++) {
+        const x = (Math.sin(i * 73.1 + stageId) * 0.5 + 0.5) * w;
+        const y = (Math.cos(i * 41.7 + stageId) * 0.5 + 0.5) * h;
+        const r = (i % 3) + 1.5;
+        c.fillStyle = glow;
+        c.globalAlpha = 0.35 + (i % 5) * 0.13;
+        c.beginPath();
+        c.arc(x, y, r, 0, Math.PI * 2);
+        c.fill();
+      }
+      c.globalAlpha = 1;
+
+      c.save();
+      c.translate(w / 2, h / 2 - 12);
+      c.fillStyle = glow;
+      c.shadowColor = glow;
+      c.shadowBlur = 24;
+      c.beginPath();
+      c.moveTo(0, 26);
+      c.bezierCurveTo(-48, -10, -48, -48, 0, -24);
+      c.bezierCurveTo(48, -48, 48, -10, 0, 26);
+      c.fill();
+      c.restore();
+
+      c.fillStyle = '#f8fafc';
+      c.font = '600 18px "Cormorant Garamond", serif';
+      c.textAlign = 'center';
+      c.fillText('Foto #' + stageId + ' • A VOS', w / 2, h - 42);
+    }
+
+    function handleImageError(imgEl, stageId) {
+      const attempt = Number(imgEl.dataset.attempt || 0);
+      if (attempt === 0) {
+        imgEl.dataset.attempt = '1';
+        imgEl.src = `imagenes/foto${stageId}.png`;
+        return;
+      }
+      if (attempt === 1) {
+        imgEl.dataset.attempt = '2';
+        imgEl.src = `imagenes/foto${stageId}.jpeg`;
+        return;
+      }
+      const parent = imgEl.parentElement;
+      if (!parent) return;
+      imgEl.remove();
+      const fallbackCanvas = document.createElement('canvas');
+      parent.appendChild(fallbackCanvas);
+      drawFallbackIllustration(fallbackCanvas, stageId);
+    }
+
+    function renderExcerptsHTML(stage) {
+      return `
+        <div class="book-quote-box">
+          <div class="book-quote-label">${stage.bookTitle}</div>
+          <div class="excerpts-stack">
+            ${stage.excerpts.map(ex => `
+              <div class="book-excerpt-block">
+                <div class="excerpt-source-tag">✦ ${ex.label}</div>
+                <p class="book-quote-text">${ex.text}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAudioWidgetHTML(stage, stageIdx) {
+      return `
+        <div class="audio-widget">
+          <div class="audio-widget-top">
+            <button type="button" id="audio-play-btn" class="play-circle-btn" onclick="toggleStageMusic(${stageIdx}, event)" title="Reproducir canción">
+              ▶
+            </button>
+            <div class="audio-meta">
+              <div class="audio-title-row">
+                <span class="audio-track-name">
+                  ${stage.trackTitle}
+                  <span id="audio-eq-bars" class="eq-bars">
+                    <span class="eq-bar"></span>
+                    <span class="eq-bar"></span>
+                    <span class="eq-bar"></span>
+                  </span>
+                </span>
+              </div>
+              <div class="audio-timeline-row">
+                <div class="audio-bar-bg">
+                  <div id="audio-progress-fill" class="audio-bar-fill"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Midnight Countdown (Nov 20, 2026 at 00:00:00)
+    const TARGET_MIDNIGHT = new Date(2026, 10, 20, 0, 0, 0).getTime();
+
+    function updateCountdownDisplay() {
+      const el = document.getElementById('countdown-dynamic-area');
+      if (!el) return;
+
+      const now = Date.now();
+      const diff = TARGET_MIDNIGHT - now;
+
+      if (diff <= 0) {
+        if (!midnightCelebrated) {
+          midnightCelebrated = true;
+          spawnFloatingHearts(30);
+        }
+        el.innerHTML = `
+          <div class="midnight-celebration">
+            <div style="font-size:2.2rem; margin-bottom:6px;">🎉❤️🥂✨❤️🎉</div>
+            <div class="midnight-title">¡Feliz 3 meses de puro bla bla bla con su servidor, osea yo, Fabrizio!</div>
+            <p style="color:#ffe4e6; font-size:1rem; line-height:1.55; margin-top:8px;">
+              Llegaron las 00:00 del 20 de noviembre. Gracias por estos tres meses inolvidables, mi China hermosa. ¡Te amo infinito!
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      const hrs = Math.floor(diff / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+      el.innerHTML = `
+        <div style="font-size:0.85rem; color:#fde047; font-weight:700; text-transform:uppercase; letter-spacing:0.08em;">
+          ⏳ Cuenta regresiva para las 00:00 (20 de Noviembre)
+        </div>
+        <div class="countdown-digits">
+          <div class="time-box">
+            <div class="time-num">${String(hrs).padStart(2, '0')}</div>
+            <div class="time-lbl">Horas</div>
+          </div>
+          <div class="time-box">
+            <div class="time-num">${String(mins).padStart(2, '0')}</div>
+            <div class="time-lbl">Minutos</div>
+          </div>
+          <div class="time-box">
+            <div class="time-num">${String(secs).padStart(2, '0')}</div>
+            <div class="time-lbl">Segundos</div>
+          </div>
+        </div>
+      `;
+    }
+
+    setInterval(updateCountdownDisplay, 1000);
+
+    function render() {
+      const container = document.getElementById('app-container');
+
+      if (isCompleted) {
+        const previewStage = STAGES[activeFinalTab];
+        activeStageForAudio = previewStage;
+
+        container.innerHTML = `
+          <section class="card">
+            <div style="text-align:center; margin-bottom:20px;">
+              <div style="font-size:2.3rem; margin-bottom:8px;">❤️✨💛✨❤️</div>
+              <div class="chapter-tag">19 / 20 de Agosto  ➔  19 / 20 de Noviembre</div>
+              <h1 class="hero-title" style="font-size:clamp(2.2rem, 5.5vw, 3.3rem);">¡Feliz 3 meses juntos, mi China hermosa!</h1>
+              <p class="hero-subtitle">
+                Completaste los <strong>5 capítulos</strong> y llegaste al <strong>100% de corazones</strong>. Gracias por estos tres meses donde te volviste mi lucecita, mi llovizna mansa, mi santuario y mi número 1.
+              </p>
+            </div>
+
+            <!-- Countdown to 00:00 -->
+            <div class="countdown-card" id="countdown-dynamic-area"></div>
+
+            <!-- Listado de todas sus respuestas -->
+            <h2 class="question-title">💌 Listado de todas tus respuestas en nuestra historia</h2>
+            <div class="answers-summary-list">
+              ${STAGES.map((st, idx) => {
+                const ans = selectedAnswers[idx];
+                return `
+                  <div class="answer-item">
+                    <div class="answer-q">Pregunta ${st.id}: ${st.question}</div>
+                    <div class="answer-a">
+                      ${ans ? `<strong>Opción ${ans.letter}:</strong> ${ans.text}` : 'Respondida ❤️'}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+
+            <!-- Las 5 Polaroids juntas -->
+            <h2 class="question-title">📸 Nuestros 5 recuerdos juntos (tocá cada foto para ver sus poemas y música)</h2>
+            <div class="all-polaroids-grid">
+              ${STAGES.map((s, idx) => `
+                <div class="mini-polaroid ${idx === activeFinalTab ? 'active-card' : ''}" onclick="stopStageAudio(); activeFinalTab=${idx}; render();">
+                  <div class="polaroid-img-wrap">
+                    <img src="${s.photoFile}" alt="${s.photoCaption}" onerror="handleImageError(this, ${s.id})" />
+                  </div>
+                  <div class="polaroid-caption">#${s.id} • ${s.photoCaption}</div>
+                </div>
+              `).join('')}
+            </div>
+
+            <!-- Detalle de la foto seleccionada -->
+            <div class="reveal-grid" style="margin-top:18px; padding-top:18px; border-top:1px solid rgba(255,255,255,0.12);">
+              <div class="polaroid">
+                <div class="polaroid-img-wrap">
+                  <img src="${previewStage.photoFile}" alt="${previewStage.photoCaption}" onerror="handleImageError(this, ${previewStage.id})" />
+                </div>
+                <div class="polaroid-caption">${previewStage.photoCaption}</div>
+                <div class="polaroid-sub">${previewStage.photoSub}</div>
+              </div>
+
+              <div>
+                ${renderExcerptsHTML(previewStage)}
+
+                <div class="poems-pair">
+                  ${previewStage.poems.map(p => `
+                    <div class="poem-box">
+                      <div class="poem-title">${p.title}</div>
+                      <div class="poem-lines">${p.lines}</div>
+                    </div>
+                  `).join('')}
+                </div>
+
+                ${renderAudioWidgetHTML(previewStage, activeFinalTab)}
+              </div>
+            </div>
+
+            <!-- Palabras en japonés -->
+            <h2 class="question-title" style="margin-top:26px;">🇯🇵 Palabras en japonés que significan amor</h2>
+            <div class="jp-glossary-grid">
+              ${JAPANESE_WORDS.map(w => `
+                <div class="jp-mini-card">
+                  <div class="kanji">${w.kanji}</div>
+                  <div class="romaji">${w.romaji}</div>
+                  <div class="desc">${w.desc}</div>
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="signature-box">
+              Tu Enamorado: Juarez Vera Fabrizio Emanuel ❤️
+            </div>
+          </section>
+        `;
+        updateCountdownDisplay();
+        return;
+      }
+
+      const stage = STAGES[currentStageIndex];
+      activeStageForAudio = stage;
+      const chosen = selectedAnswers[currentStageIndex];
+      const isStageUnlocked = unlockedCount >= currentStageIndex + 1;
+
+      container.innerHTML = `
+        <section class="card">
+          <div class="chapter-tag">${stage.chapterTag}</div>
+          <h1 class="hero-title">Para mi China hermosa, la número 1</h1>
+          <p class="hero-subtitle">
+            Elegí tu respuesta en cada capítulo. Cada recuerdo sube nuestros corazones y abre una foto, dos poemas, música y lo que dejé escrito en nuestro libro <strong>«A VOS»</strong>.
+          </p>
+
+          <div class="jp-box">
+            <div class="jp-header">
+              <span class="jp-kanji">${stage.jp.kanji}</span>
+              <span class="jp-romaji">${stage.jp.romaji}</span>
+            </div>
+            <div class="jp-meaning">${stage.jp.meaning}</div>
+          </div>
+
+          <h2 class="question-title">${stage.id}. ${stage.question}</h2>
+
+          <div class="options-grid">
+            ${stage.options.map((opt, idx) => {
+              const isBlocked = !!blockedOptions[`${currentStageIndex}-${opt.letter}`];
+              const isSelected = chosen && chosen.letter === opt.letter;
+              return `
+                <button
+                  type="button"
+                  class="option-btn ${isBlocked ? 'blocked-opt' : ''} ${isSelected ? 'selected-opt' : ''}"
+                  ${isBlocked ? 'disabled' : ''}
+                  onclick="selectAnswer(${idx})">
+                  <span><span class="opt-letter">Opción ${opt.letter}:</span> ${opt.text}</span>
+                  <span>${isBlocked ? '🚫' : isSelected ? '💖' : '❤️'}</span>
+                </button>
+              `;
+            }).join('')}
+          </div>
+
+          ${isStageUnlocked && chosen ? `
+            <div class="reveal-section">
+              <div class="chosen-note">Tu respuesta (Opción ${chosen.letter}): «${chosen.text}» — +20% de corazones ❤️</div>
+              <div class="reveal-grid">
+                <div class="polaroid">
+                  <div class="polaroid-img-wrap">
+                    <img src="${stage.photoFile}" alt="${stage.photoCaption}" onerror="handleImageError(this, ${stage.id})" />
+                  </div>
+                  <div class="polaroid-caption">${stage.photoCaption}</div>
+                  <div class="polaroid-sub">${stage.photoSub}</div>
+                </div>
+
+                <div>
+                  ${renderExcerptsHTML(stage)}
+
+                  <div class="poems-pair">
+                    ${stage.poems.map(p => `
+                      <div class="poem-box">
+                        <div class="poem-title">${p.title}</div>
+                        <div class="poem-lines">${p.lines}</div>
+                      </div>
+                    `).join('')}
+                  </div>
+
+                  ${renderAudioWidgetHTML(stage, currentStageIndex)}
+
+                  <button type="button" class="primary-btn" onclick="goNext()">
+                    ${currentStageIndex < STAGES.length - 1
+                      ? `Continuar al Recuerdo ${currentStageIndex + 2} de ${STAGES.length} ❤️`
+                      : 'Ver todas tus respuestas, las 5 fotos juntas y el contador ✨'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ` : ''}
+        </section>
+      `;
+    }
+
+    // Boot
+    applyTheme(STAGES[0]);
+    updateProgressBar();
+    render();
+    animateCanvas();
+  </script>
+</body>
+</html>
