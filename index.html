@@ -184,6 +184,13 @@
       gap: 8px;
     }
 
+    .top-bar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
     .heart-counter {
       display: flex;
       align-items: center;
@@ -195,6 +202,24 @@
       border: 1px solid rgba(251, 113, 133, 0.35);
       padding: 5px 12px;
       border-radius: 999px;
+    }
+
+    .reset-story-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .reset-story-btn:hover {
+      background: rgba(251, 113, 133, 0.16);
+      border-color: rgba(251, 113, 133, 0.45);
+      color: #fff;
     }
 
     .heart-pulse {
@@ -857,11 +882,16 @@
           <span>📖</span>
           <span>A VOS — Nuestra Historia en Capítulos</span>
         </div>
-        <div class="heart-counter">
-          <span class="heart-pulse">❤️</span>
-          <span id="heart-percent">0%</span>
-          <span>•</span>
-          <span id="heart-count">0 / 5 Recuerdos</span>
+        <div class="top-bar-actions">
+          <div class="heart-counter">
+            <span class="heart-pulse">❤️</span>
+            <span id="heart-percent">0%</span>
+            <span>•</span>
+            <span id="heart-count">0 / 5 Recuerdos</span>
+          </div>
+          <button type="button" class="reset-story-btn" onclick="resetStoryProgress()">
+            🔄 Repetir historia
+          </button>
         </div>
       </div>
       <div class="progress-track">
@@ -1149,6 +1179,8 @@
       { kanji: 'ずっと一緒', romaji: 'Zutto issho (Nueva)', desc: '«Siempre juntos»: en los días bonitos, en los difíciles y en todos los planes que aún no existen.' }
     ];
 
+    const STORAGE_KEY = 'a_vos_3_meses_progreso_v1';
+
     let currentStageIndex = 0;
     let unlockedCount = 0;
     let selectedAnswers = {};
@@ -1156,6 +1188,66 @@
     let isCompleted = false;
     let activeFinalTab = 0;
     let midnightCelebrated = false;
+
+    function saveProgress() {
+      try {
+        const payload = {
+          currentStageIndex,
+          unlockedCount,
+          selectedAnswers,
+          blockedOptions,
+          isCompleted,
+          activeFinalTab
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      } catch (_) {
+        // Ignorar si el almacenamiento del navegador está bloqueado
+      }
+    }
+
+    function loadProgress() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        if (typeof data.currentStageIndex === 'number') {
+          currentStageIndex = Math.min(Math.max(0, data.currentStageIndex), STAGES.length - 1);
+        }
+        if (typeof data.unlockedCount === 'number') {
+          unlockedCount = Math.min(Math.max(0, data.unlockedCount), STAGES.length);
+        }
+        if (data.selectedAnswers && typeof data.selectedAnswers === 'object') {
+          selectedAnswers = data.selectedAnswers;
+        }
+        if (data.blockedOptions && typeof data.blockedOptions === 'object') {
+          blockedOptions = data.blockedOptions;
+        }
+        isCompleted = !!data.isCompleted;
+        if (typeof data.activeFinalTab === 'number') {
+          activeFinalTab = Math.min(Math.max(0, data.activeFinalTab), STAGES.length - 1);
+        }
+      } catch (_) {
+        // Ignorar datos corruptos
+      }
+    }
+
+    function resetStoryProgress() {
+      stopStageAudio();
+      currentStageIndex = 0;
+      unlockedCount = 0;
+      selectedAnswers = {};
+      blockedOptions = {};
+      isCompleted = false;
+      activeFinalTab = 0;
+      midnightCelebrated = false;
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (_) {}
+      applyTheme(STAGES[0]);
+      updateProgressBar();
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 
     // Audio Clip Controller
     let progressTimer = null;
@@ -1381,6 +1473,7 @@
 
     function showTrapNotification(stageIdx, letter) {
       blockedOptions[`${stageIdx}-${letter}`] = true;
+      saveProgress();
       const root = document.getElementById('trap-modal-root');
       root.innerHTML = `
         <div class="trap-overlay" onclick="closeTrapNotification()">
@@ -1422,6 +1515,7 @@
       if (unlockedCount < currentStageIndex + 1) {
         unlockedCount = currentStageIndex + 1;
       }
+      saveProgress();
       spawnFloatingHearts(16);
       updateProgressBar();
       render();
@@ -1432,6 +1526,7 @@
       if (currentStageIndex < STAGES.length - 1) {
         currentStageIndex++;
         activeStageForAudio = STAGES[currentStageIndex];
+        saveProgress();
         applyTheme(STAGES[currentStageIndex]);
         updateProgressBar();
         render();
@@ -1439,11 +1534,19 @@
       } else {
         isCompleted = true;
         activeStageForAudio = STAGES[0];
+        saveProgress();
         spawnFloatingHearts(28);
         updateProgressBar();
         render();
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
+    }
+
+    function selectFinalTab(idx) {
+      stopStageAudio();
+      activeFinalTab = idx;
+      saveProgress();
+      render();
     }
 
     function drawFallbackIllustration(canvasEl, stageId) {
@@ -1656,7 +1759,7 @@
             <h2 class="question-title">📸 Nuestros 5 recuerdos juntos (tocá cada foto para ver sus poemas y música)</h2>
             <div class="all-polaroids-grid">
               ${STAGES.map((s, idx) => `
-                <div class="mini-polaroid ${idx === activeFinalTab ? 'active-card' : ''}" onclick="stopStageAudio(); activeFinalTab=${idx}; render();">
+                <div class="mini-polaroid ${idx === activeFinalTab ? 'active-card' : ''}" onclick="selectFinalTab(${idx})">
                   <div class="polaroid-img-wrap">
                     <img src="${s.photoFile}" alt="${s.photoCaption}" onerror="handleImageError(this, ${s.id})" />
                   </div>
@@ -1792,7 +1895,8 @@
     }
 
     // Boot
-    applyTheme(STAGES[0]);
+    loadProgress();
+    applyTheme(STAGES[currentStageIndex]);
     updateProgressBar();
     render();
     animateCanvas();
