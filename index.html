@@ -1180,6 +1180,7 @@
     ];
 
     const STORAGE_KEY = 'a_vos_3_meses_progreso_v1';
+    const HASH_PREFIX = '#a_vos_state=';
 
     let currentStageIndex = 0;
     let unlockedCount = 0;
@@ -1189,46 +1190,66 @@
     let activeFinalTab = 0;
     let midnightCelebrated = false;
 
-    function saveProgress() {
-      try {
-        const payload = {
-          currentStageIndex,
-          unlockedCount,
-          selectedAnswers,
-          blockedOptions,
-          isCompleted,
-          activeFinalTab
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-      } catch (_) {
-        // Ignorar si el almacenamiento del navegador está bloqueado
+    function applySavedState(data) {
+      if (!data || typeof data !== 'object') return;
+      if (typeof data.currentStageIndex === 'number') {
+        currentStageIndex = Math.min(Math.max(0, data.currentStageIndex), STAGES.length - 1);
+      }
+      if (typeof data.unlockedCount === 'number') {
+        unlockedCount = Math.min(Math.max(0, data.unlockedCount), STAGES.length);
+      }
+      if (data.selectedAnswers && typeof data.selectedAnswers === 'object') {
+        selectedAnswers = data.selectedAnswers;
+      }
+      if (data.blockedOptions && typeof data.blockedOptions === 'object') {
+        blockedOptions = data.blockedOptions;
+      }
+      isCompleted = !!data.isCompleted;
+      if (typeof data.activeFinalTab === 'number') {
+        activeFinalTab = Math.min(Math.max(0, data.activeFinalTab), STAGES.length - 1);
       }
     }
 
+    function saveProgress() {
+      const payload = {
+        currentStageIndex,
+        unlockedCount,
+        selectedAnswers,
+        blockedOptions,
+        isCompleted,
+        activeFinalTab
+      };
+      const serialized = JSON.stringify(payload);
+
+      try {
+        localStorage.setItem(STORAGE_KEY, serialized);
+      } catch (_) {}
+
+      try {
+        const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(serialized))));
+        history.replaceState(null, '', HASH_PREFIX + encoded);
+      } catch (_) {}
+    }
+
     function loadProgress() {
+      let loadedFromHash = false;
+      try {
+        if (window.location.hash && window.location.hash.startsWith(HASH_PREFIX)) {
+          const encoded = window.location.hash.slice(HASH_PREFIX.length);
+          const decoded = decodeURIComponent(escape(atob(decodeURIComponent(encoded))));
+          applySavedState(JSON.parse(decoded));
+          loadedFromHash = true;
+        }
+      } catch (_) {}
+
+      if (loadedFromHash) return;
+
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return;
-        const data = JSON.parse(raw);
-        if (typeof data.currentStageIndex === 'number') {
-          currentStageIndex = Math.min(Math.max(0, data.currentStageIndex), STAGES.length - 1);
+        if (raw) {
+          applySavedState(JSON.parse(raw));
         }
-        if (typeof data.unlockedCount === 'number') {
-          unlockedCount = Math.min(Math.max(0, data.unlockedCount), STAGES.length);
-        }
-        if (data.selectedAnswers && typeof data.selectedAnswers === 'object') {
-          selectedAnswers = data.selectedAnswers;
-        }
-        if (data.blockedOptions && typeof data.blockedOptions === 'object') {
-          blockedOptions = data.blockedOptions;
-        }
-        isCompleted = !!data.isCompleted;
-        if (typeof data.activeFinalTab === 'number') {
-          activeFinalTab = Math.min(Math.max(0, data.activeFinalTab), STAGES.length - 1);
-        }
-      } catch (_) {
-        // Ignorar datos corruptos
-      }
+      } catch (_) {}
     }
 
     function resetStoryProgress() {
@@ -1242,6 +1263,9 @@
       midnightCelebrated = false;
       try {
         localStorage.removeItem(STORAGE_KEY);
+      } catch (_) {}
+      try {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
       } catch (_) {}
       applyTheme(STAGES[0]);
       updateProgressBar();
